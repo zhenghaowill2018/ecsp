@@ -1,0 +1,45 @@
+version: "3.7"
+
+# 运行 docker stack deploy ecsp -c docker-stack.yml
+services:
+  ecsp:
+    image: 192.168.66.40:5000/ecsp:v0.0.6
+    volumes:
+      - .:/srv
+    configs:
+      - source: confile
+        target: /srv/settings.py
+    ports:
+      - "8050:8050"
+    networks:
+      - sanic_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    command: python sanic_main.py
+
+  etl:
+    image: 192.168.66.40:5000/ecsp:v0.0.6
+    volumes: 
+      - .:/srv
+      - ../ecsp_file:/ecsp_file
+    configs:
+      - source: confile
+        target: /srv/settings.py
+    networks:
+      - sanic_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    command: python etl_main.py
+
+networks:
+  sanic_net:
+    driver: overlay
+    attachable: true
+
+configs:
+  confile:
+    file: ./settings.py
